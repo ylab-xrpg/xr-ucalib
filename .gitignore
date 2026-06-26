@@ -1,0 +1,39 @@
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Editor =====
+.vscode/
+.idea/
+.clangd
+.VSCodeCounter/
+
+# ===== Build =====
+build/
+build_*/
+devel/
+install/
+log/
+bin/
+lib/
+
+# ===== CMake =====
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# ===== Python =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# ===== Logs =====
+*.log
+
+# ===== User Custom Ignore =====
+script_temp
+resource_temp
+data_temp
+NOTES.txt
