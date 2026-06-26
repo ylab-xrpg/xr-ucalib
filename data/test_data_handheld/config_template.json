@@ -1,0 +1,305 @@
+{
+  "cam_calib_config": {
+    "cam_down_sample_rate": 1,
+    "ceres_max_iterations": 20,
+    "enable_ba_refine": true,
+    "multi_thread_num": 8
+  },
+  "cam_configs": [
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "RADTAN",
+      "detection_display_mode": "NONE",
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": -1.0,
+      "intrinsic_prior": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "noise": 0.5,
+      "reproj_threshold": -1.0,
+      "rot_q_Cb_Ci_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "save_all_reproj_image": false,
+      "toff_Cb_Ci_prior": 0.0,
+      "trans_Cb_Ci_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "RADTAN",
+      "detection_display_mode": "NONE",
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": -1.0,
+      "intrinsic_prior": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "noise": 0.5,
+      "reproj_threshold": -1.0,
+      "rot_q_Cb_Ci_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "save_all_reproj_image": false,
+      "toff_Cb_Ci_prior": 0.0,
+      "trans_Cb_Ci_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "RADTAN",
+      "detection_display_mode": "NONE",
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": -1.0,
+      "intrinsic_prior": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "noise": 0.5,
+      "reproj_threshold": -1.0,
+      "rot_q_Cb_Ci_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "save_all_reproj_image": false,
+      "toff_Cb_Ci_prior": 0.0,
+      "trans_Cb_Ci_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "RADTAN",
+      "detection_display_mode": "NONE",
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": -1.0,
+      "intrinsic_prior": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "noise": 0.5,
+      "reproj_threshold": -1.0,
+      "rot_q_Cb_Ci_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "save_all_reproj_image": false,
+      "toff_Cb_Ci_prior": 0.0,
+      "trans_Cb_Ci_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "imu_configs": [
+    {
+      "acc_bias_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "body_frame_flag": false,
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "frequency_hz": 200.0,
+      "gyr_bias_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "imu_model_type": "CALIBRATED",
+      "noise": {
+        "acc_b": 0.005,
+        "acc_n": 0.02,
+        "gyr_b": 0.0005,
+        "gyr_n": 0.001
+      },
+      "rot_q_B_Ii_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "toff_B_Ii_prior": 0.0,
+      "trans_B_Ii_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "acc_bias_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "body_frame_flag": false,
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "frequency_hz": 200.0,
+      "gyr_bias_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "imu_model_type": "CALIBRATED",
+      "noise": {
+        "acc_b": 0.005,
+        "acc_n": 0.02,
+        "gyr_b": 0.0005,
+        "gyr_n": 0.001
+      },
+      "rot_q_B_Ii_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "toff_B_Ii_prior": 0.0,
+      "trans_B_Ii_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "mag_configs": [
+    {
+      "down_sample_rate_ucalib": 1,
+      "file_name": "",
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "noise": 0.05,
+      "rot_q_B_Mi_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "toff_B_Mi_prior": 0.0
+    }
+  ],
+  "target_configs": [
+    {
+      "fiducial_cols": 6,
+      "fiducial_rows": 6,
+      "fiducial_size": 0.088,
+      "fiducial_spacing": 0.02,
+      "fiducial_type": "APRILTAG",
+      "fix_spatial_extrinsic": false,
+      "rot_q_W_T_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "start_id": 0,
+      "target_idx": -1,
+      "trans_W_T_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "fiducial_cols": 6,
+      "fiducial_rows": 6,
+      "fiducial_size": 0.088,
+      "fiducial_spacing": 0.02,
+      "fiducial_type": "APRILTAG",
+      "fix_spatial_extrinsic": false,
+      "rot_q_W_T_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "start_id": 0,
+      "target_idx": -1,
+      "trans_W_T_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "fiducial_cols": 6,
+      "fiducial_rows": 6,
+      "fiducial_size": 0.088,
+      "fiducial_spacing": 0.02,
+      "fiducial_type": "APRILTAG",
+      "fix_spatial_extrinsic": false,
+      "rot_q_W_T_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "start_id": 0,
+      "target_idx": -1,
+      "trans_W_T_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "unified_calib_config": {
+    "ceres_max_iterations": 20,
+    "enable_unified_calib": false,
+    "fix_camera_extrinsics": true,
+    "fix_camera_intrinsics": true,
+    "gravity_magnitude": 9.8,
+    "max_toff_change": 0.1,
+    "multi_thread_num": 8,
+    "spline_knot_interval": 0.01
+  }
+}

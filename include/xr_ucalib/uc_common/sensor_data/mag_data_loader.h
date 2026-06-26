@@ -1,0 +1,45 @@
+// Copyright 2026 Yongjiang Laboratory
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#pragma once
+
+#include <memory>
+#include <string>
+
+#include "xr_ucalib/uc_common/sensor_data/sensor_data_types.h"
+
+namespace xr_ucalib {
+
+/// @brief Magnetometer data loader class.
+class MagDataLoader : public DataLoaderBase {
+ public:
+  using Ptr = std::shared_ptr<MagDataLoader>;
+
+  // Factory method to create a shared pointer instance.
+  static Ptr Create() { return Ptr(new MagDataLoader()); }
+
+  // Override Load method to load Magnetometer data from file.
+  // Requires input magnetometer data to be intrinsically calibrated (approx. unit vectors).
+  bool Load(const std::string& data_path) override;
+
+  // Get the loaded magnetometer sequence.
+  MagSequence::Ptr GetSequence() const { return sequence_; };
+
+ private:
+  MagDataLoader() = default;
+
+  MagSequence::Ptr sequence_;
+};
+
+}  // namespace xr_ucalib

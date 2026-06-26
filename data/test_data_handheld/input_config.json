@@ -1,0 +1,159 @@
+{
+  "cam_calib_config": {
+    "cam_down_sample_rate": 10,
+    "ceres_max_num_iterations": 20,
+    "enable_ba_refine": true,
+    "multi_thread_num": 12
+  },
+  "cam_configs": [
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "EQUIDISTANT",
+      "save_all_reproj_image": true,
+      "down_sample_rate_ucalib": 2,
+      "file_name": "cam0",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": 240,
+      "reproj_threshold": 2,
+      "noise": 0.5
+    },
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "EQUIDISTANT",
+      "down_sample_rate_ucalib": 2,
+      "file_name": "cam1",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": 240,
+      "reproj_threshold": 2,
+      "noise": 0.5
+    },
+    {
+      "base_camera_flag": true,
+      "cam_model_type": "EQUIDISTANT",
+      "down_sample_rate_ucalib": 2,
+      "file_name": "cam2",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": 240,
+      "reproj_threshold": 2,
+      "noise": 0.5
+    },
+    {
+      "base_camera_flag": false,
+      "cam_model_type": "EQUIDISTANT",
+      "down_sample_rate_ucalib": 2,
+      "file_name": "cam3",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "initial_focal_length": 240,
+      "reproj_threshold": 2,
+      "noise": 0.5
+    }
+  ],
+  "imu_configs": [
+    {
+      "body_frame_flag": true,
+      "down_sample_rate_ucalib": 5,
+      "file_name": "imu0.csv",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "frequency_hz": 1000.0,
+      "imu_model_type": "CALIBRATED",
+      "noise": {
+        "acc_b": 0.0001994539453860211,
+        "acc_n": 0.015117597500409535,
+        "gyr_b": 1.1092858061130354e-05,
+        "gyr_n": 0.0010444522263924943
+      }
+    },
+    {
+      "body_frame_flag": false,
+      "down_sample_rate_ucalib": 5,
+      "file_name": "imu1.csv",
+      "fix_intrinsic": false,
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "frequency_hz": 500.0,
+      "imu_model_type": "CALIBRATED",
+      "noise": {
+        "acc_b": 0.0001994539453860211,
+        "acc_n": 0.015117597500409535,
+        "gyr_b": 1.1092858061130354e-05,
+        "gyr_n": 0.0010444522263924943
+      }
+    }
+  ],
+  "mag_configs": [
+    {
+      "down_sample_rate_ucalib": 5,
+      "file_name": "mag1.csv",
+      "fix_spatial_extrinsic": false,
+      "fix_temporal_extrinsic": false,
+      "noise": 0.1,
+      "rot_q_B_I_prior": {
+        "w": 1.0,
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "toff_B_I_prior": 0.0,
+      "trans_B_I_prior": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "target_configs": [
+    {
+      "fiducial_cols": 6,
+      "fiducial_rows": 6,
+      "fiducial_size": 0.088,
+      "fiducial_spacing": 0.3,
+      "fiducial_type": "APRILTAG",
+      "fix_spatial_extrinsic": false,
+      "start_id": 144,
+      "target_idx": 1,
+      "world_frame_flag": true
+    },
+    {
+      "fiducial_cols": 6,
+      "fiducial_rows": 6,
+      "fiducial_size": 0.088,
+      "fiducial_spacing": 0.3,
+      "fiducial_type": "APRILTAG",
+      "fix_spatial_extrinsic": false,
+      "start_id": 288,
+      "target_idx": 2,
+      "world_frame_flag": false
+    },
+    {
+      "fiducial_cols": 6,
+      "fiducial_rows": 6,
+      "fiducial_size": 0.088,
+      "fiducial_spacing": 0.3,
+      "fiducial_type": "APRILTAG",
+      "fix_spatial_extrinsic": false,
+      "start_id": 432,
+      "target_idx": 3,
+      "world_frame_flag": false
+    }
+  ],
+  "unified_calib_config": {
+    "ceres_max_num_iterations": 20,
+    "enable_unified_calib": true,
+    "fix_camera_extrinsics": true,
+    "fix_camera_intrinsics": true,
+    "gravity_magnitude": 9.806,
+    "max_toff_change": 0.05,
+    "multi_thread_num": 12,
+    "spline_knot_interval": 0.02
+  }
+}
