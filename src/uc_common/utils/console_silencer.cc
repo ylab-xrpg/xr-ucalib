@@ -18,8 +18,9 @@
 
 #ifdef _WIN32
 #include <io.h>
-#include <cstdio>
 #include <windows.h>
+
+#include <cstdio>
 #define dup _dup
 #define dup2 _dup2
 #define fileno _fileno

@@ -31,7 +31,7 @@ namespace xr_ucalib {
 
 /**
  * @brief Camera rig calibrator that refines multi-camera and multi-board
- * calibration based on the initial SFM results.
+ * calibration based on the initial SfM results.
  *
  * We perform non-linear optimization to minimize the reprojection errors of all
  * detected keypoints across all cameras. Based on the system configuration, a
@@ -42,7 +42,7 @@ namespace xr_ucalib {
  *  - Transformations between multiple calibration targets.
  *
  * Note that:
- * 1. This calibrator can be executed independently after the initial SFM
+ * 1. This calibrator can be executed independently after the initial SfM
  * calibration to perform camera-only refinement. Afterwards, camera-related
  * parameters can be fixed in the subsequent unified continuous-time calibration
  * to ensure accuracy.
@@ -50,7 +50,7 @@ namespace xr_ucalib {
  * requires strictly synchronized images across all cameras. If image
  * correspondence cannot be guaranteed, or if time offsets exist between
  * cameras, a continuous-time unified calibration should be performed directly
- * after SFM calibration.
+ * after SfM calibration.
  */
 class CamRigCalibrator {
  public:
@@ -149,7 +149,7 @@ class CamRigCalibrator {
       const FrameCorrespondence& frame_correspondence,
       CamPoses& cam_poses_W_Cb);
 
-  /// @brief Print the calibration results after SFM calibration.
+  /// @brief Print the calibration results after SfM calibration.
   void PrintCalibrationResults();
 
   // Pointers to system configuration, sensor manager, and calibration

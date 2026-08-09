@@ -79,4 +79,4 @@ void Timer::PrintHours() const {
   spdlog::info("Elapsed time: {:.3f} [hours]", ElapsedHours());
 }
 
-} // namespace xr_ucalib
+}  // namespace xr_ucalib

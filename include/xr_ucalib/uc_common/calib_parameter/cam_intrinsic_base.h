@@ -57,7 +57,7 @@ class CamIntrinsicBase {
   int width = 0;
   int height = 0;
 
-  // COLMAP camera ID used in SFM calibration.
+  // COLMAP camera ID used in SfM calibration.
   unsigned int colmap_cam_id = 0;
 
   // Number of intrinsic parameters.

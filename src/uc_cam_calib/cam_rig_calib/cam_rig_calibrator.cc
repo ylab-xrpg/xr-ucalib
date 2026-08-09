@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // clang-format off
-#include "xr_ucalib/uc_cam_calib/cam_rig_calib/cam_rig_calibrator.h" 
+#include "xr_ucalib/uc_cam_calib/cam_rig_calib/cam_rig_calibrator.h"
 
 #include <atomic>
 #include <filesystem>
@@ -38,13 +38,19 @@ namespace xr_ucalib {
 bool CamRigCalibrator::RunCalibration() {
   spdlog::info("---------------- Camera Rig Calibration ---------------");
 
-  // We require that SFM calibration has been completed before camera rig
+  if (sensor_manager_->GetAllCamSequences().empty()) {
+    spdlog::error(
+        "Camera rig calibration requires at least one camera sequence.");
+    return false;
+  }
+
+  // We require that SfM calibration has been completed before camera rig
   // calibration.
   uint8_t required_status = CalibParameters::ParamStatus::SETUP |
                             CalibParameters::ParamStatus::SFM_CALIB;
   if ((calib_parameters_->param_status & required_status) != required_status) {
     spdlog::error(
-        "SFM calibration must be completed before camera rig calibration. "
+        "SfM calibration must be completed before camera rig calibration. "
         "Current param_status: {}",
         static_cast<int>(calib_parameters_->param_status));
     return false;
@@ -309,8 +315,7 @@ bool CamRigCalibrator::BuildCamFrameCorrespondences(
   if (skipped_no_keypoints > base_cam_seq->Size() / 10.) {
     spdlog::error(
         "More than 10% of frames are skipped due to insufficient keypoints "
-        "(minimum required: {}}). Please ensure good visibility of the "
-        "fiducial "
+        "(minimum required: {}). Please ensure good visibility of the fiducial "
         "target in all camera views.",
         kMinKeypoints);
 

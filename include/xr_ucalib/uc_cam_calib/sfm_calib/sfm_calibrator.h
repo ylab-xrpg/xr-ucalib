@@ -35,9 +35,10 @@ namespace xr_ucalib {
  * initialization.
  *
  * Workflow:
- * 1. Incremental Sfm: Perform structure form motion (SFM) for each camera
- * using target corners as independent landmarks to initialize  cam intrinsics.
- * 2. Map Fusion & Scaling: Merge individual maps and recovers physical scale
+ * 1. Incremental SfM: Perform structure-from-motion (SfM) for each camera
+ * using target corners as independent landmarks to initialize camera
+ * intrinsics.
+ * 2. Map Fusion & Scaling: Merge individual maps and recover physical scale
  * using target geometry to initialize extrinsic parameters between cameras (if
  * multiple cameras).
  * 3. Target Alignment: Initialize extrinsics between multiple calibration
@@ -58,7 +59,7 @@ class SfmCalibrator {
         new SfmCalibrator(system_config, sensor_manager, calib_parameters));
   }
 
-  // Run the SFM calibration process for all cameras, initializing camera
+  // Run the SfM calibration process for all cameras, initializing camera
   // intrinsics, camera extrinsics, and target transformations.
   bool RunCalibration();
 
@@ -99,7 +100,7 @@ class SfmCalibrator {
 
   /**
    * @brief Run COLMAP incremental mapper based on the provided database
-   * to perform SFM for a camera.
+   * to perform SfM for a camera.
    *
    * @param[in] db_path Path to the COLMAP database.
    * @param[in] img_map Map from engaged COLMAP image IDs to camera frames.
@@ -194,7 +195,7 @@ class SfmCalibrator {
       const std::map<int, Eigen::Vector3d>& fused_points3d,
       std::map<int, Eigen::Matrix4d>& T_T0_Ti_map);
 
-  /// @brief Print the calibration results after SFM calibration.
+  /// @brief Print the calibration results after SfM calibration.
   void PrintCalibrationResults();
 
   // Pointers to system configuration, sensor manager, and calibration

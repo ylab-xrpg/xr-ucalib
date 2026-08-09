@@ -21,8 +21,8 @@ namespace xr_ucalib {
  * stderr).
  *
  * This class redirects stdout and stderr to /dev/null upon construction and
- * restores them to their original state upon destruction. 
- * 
+ * restores them to their original state upon destruction.
+ *
  * Usage: Create an instance of ConsoleSilencer in a scope where you want to
  * silence console output.
  * {

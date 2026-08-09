@@ -42,13 +42,13 @@
 namespace xr_ucalib {
 
 bool UnifiedCalibrator::RunCalibration() {
-  // We require that SFM calibration has been completed before unified
+  // We require that SfM calibration has been completed before unified
   // calibration.
   uint8_t required_status = CalibParameters::ParamStatus::SETUP |
                             CalibParameters::ParamStatus::SFM_CALIB;
   if ((calib_parameters_->param_status & required_status) != required_status) {
     spdlog::error(
-        "SFM calibration must be completed before unified calibration. "
+        "SfM calibration must be completed before unified calibration. "
         "Current param_status: {}",
         static_cast<int>(calib_parameters_->param_status));
     return false;
@@ -211,7 +211,8 @@ bool UnifiedCalibrator::Initialize() {
 
   // Clamp spline range to the recovered base trajectory time range.
   if (!base_cam_traj || base_cam_traj->Size() < 2) {
-    spdlog::error("Base camera trajectory is empty, cannot initialize splines.");
+    spdlog::error(
+        "Base camera trajectory is empty, cannot initialize splines.");
     return false;
   }
   const double traj_start_time = base_cam_traj->Front()->timestamp;
@@ -423,7 +424,6 @@ bool UnifiedCalibrator::BuildAndOptimizeCereProblem() {
   // Step 2: Add residual blocks for all camera frames.
   int cam_residual_count = 0;
   constexpr int kMinKeypoints = 10;
-  int ignored_cam_frames = 0;
   const auto& cam_sequences = sensor_manager_->GetAllCamSequences();
   const auto& cam_configs = sensor_manager_->GetAllCamConfigs();
   const auto& target_corners = sensor_manager_->GetTargetCorners();
@@ -431,6 +431,7 @@ bool UnifiedCalibrator::BuildAndOptimizeCereProblem() {
   for (const auto& [cam_label, cam_seq] : cam_sequences) {
     sequence_timestamps["cam:" + cam_label] = {};
     cam_residual_count = 0;
+    int ignored_cam_frames = 0;
     int frame_idx = 0;
     const int down_sample_rate =
         cam_configs.at(cam_label).down_sample_rate_ucalib;
@@ -475,7 +476,7 @@ bool UnifiedCalibrator::BuildAndOptimizeCereProblem() {
           cam_label, ignored_cam_frames, kMinKeypoints);
     }
 
-    spdlog::info("Added {}  residual blocks for camera: {}", cam_residual_count,
+    spdlog::info("Added {} residual blocks for camera: {}", cam_residual_count,
                  cam_label);
   }
 
@@ -570,7 +571,7 @@ bool UnifiedCalibrator::BuildAndOptimizeCereProblem() {
   options.minimizer_progress_to_stdout = true;
   FLAGS_minloglevel = google::GLOG_WARNING;  // Suppress Ceres info logs.
 
-  spdlog::info("Runing unified calibration, it may take a while...");
+  spdlog::info("Running unified calibration, it may take a while...");
   ceres::Solver::Summary summary;
   ceres::Solve(options, &problem, &summary);
 
@@ -584,10 +585,9 @@ bool UnifiedCalibrator::BuildAndOptimizeCereProblem() {
     }
 
     std::string validation_output_path = work_dir + "/validation_report.txt";
-    if (!validator->ValidateAndSaveResults(validation_output_path,
-                         sequence_timestamps,
-                         kMeasStartTime, kMeasEndTime,
-                         summary.IsSolutionUsable())) {
+    if (!validator->ValidateAndSaveResults(
+            validation_output_path, sequence_timestamps, kMeasStartTime,
+            kMeasEndTime, summary.IsSolutionUsable())) {
       spdlog::warn("Failed to generate validation report: {}",
                    validation_output_path);
     } else {

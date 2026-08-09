@@ -1,16 +1,18 @@
 cmake_minimum_required(VERSION 3.11)
 project(XRUCalib VERSION 0.1.0)
 
-# Set default build type to Debug if not specified
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
-ENDIF()
+enable_testing()
+
+# Set the default build type to Release if it was not specified.
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-# Output directories
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+# Keep all generated artifacts inside the selected build tree.
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 # C++ standard settings
 set(CMAKE_CXX_STANDARD 17)
@@ -21,7 +23,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MSVC)
   add_compile_options(/W3 /O2 /bigobj)  # /bigobj: allow larger object files
 else()
-  add_compile_options(-Wall -O3)
+  add_compile_options(-Wall)
 endif()
 
 # Handle Conda environment
@@ -30,11 +32,11 @@ if(DEFINED ENV{CONDA_PREFIX})
   # 1. Prioritize system paths (/usr/local, /usr) over Conda paths.
   # This ensures that find_package(), find_library(), etc. look in system dirs first.
   list(INSERT CMAKE_PREFIX_PATH 0 "/usr/local" "/usr")
-  
+
   # 2. Add Conda prefix to ignore path to prevent picking up its libraries/headers
   # if they are not explicitly requested.
   list(APPEND CMAKE_IGNORE_PATH "$ENV{CONDA_PREFIX}")
-  
+
   # 3. For some versions of CMake, CMAKE_SYSTEM_IGNORE_PATH is also needed.
   list(APPEND CMAKE_SYSTEM_IGNORE_PATH "$ENV{CONDA_PREFIX}")
 endif()
@@ -113,10 +115,14 @@ find_package(GTest 1.13.0 QUIET)
 if(NOT GTest_FOUND)
   message(FATAL_ERROR "GTest not found")
 else()
-  if(NOT GTest_VERSION VERSION_EQUAL "1.13.0")
+  if(GTest_VERSION AND NOT GTest_VERSION VERSION_EQUAL "1.13.0")
     message(WARNING "Found GTest ${GTest_VERSION}, recommended version is 1.13.0")
   endif()
-  message(STATUS "GTest version: ${GTest_VERSION}")
+  if(GTest_VERSION)
+    message(STATUS "GTest version: ${GTest_VERSION}")
+  else()
+    message(STATUS "GTest version: unknown")
+  endif()
 endif()
 
 # COLMAP
@@ -128,7 +134,7 @@ else()
     message(WARNING "Found COLMAP ${COLMAP_VERSION}, recommended version is 3.9")
   endif()
   message(STATUS "COLMAP version: ${COLMAP_VERSION}")
-  
+
   # Verify Ceres was found by COLMAP
   if(Ceres_FOUND)
      message(STATUS "Ceres version (found via COLMAP): ${Ceres_VERSION}")

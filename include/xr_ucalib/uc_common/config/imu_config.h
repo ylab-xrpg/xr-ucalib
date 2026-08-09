@@ -71,7 +71,7 @@ struct ImuConfig {
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(
     ImuConfig, file_name, imu_model_type, down_sample_rate_ucalib, frequency_hz,
     noise, body_frame_flag, fix_temporal_extrinsic, fix_spatial_extrinsic,
-    noise, toff_B_Ii_prior, trans_B_Ii_prior, rot_q_B_Ii_prior, acc_bias_prior,
+    toff_B_Ii_prior, trans_B_Ii_prior, rot_q_B_Ii_prior, acc_bias_prior,
     gyr_bias_prior);
 
 }  // namespace xr_ucalib

@@ -13,6 +13,8 @@
 // limitations under the License.
 
 // clang-format off
+#include <functional>
+#include <limits>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -24,14 +26,44 @@
 namespace xr_ucalib {
 namespace {
 
+SystemConfig::Ptr CreateValidCameraOnlyConfig() {
+  auto config = SystemConfig::Create();
+  CamConfig camera;
+  camera.file_name = "cam0";
+  camera.initial_focal_length = 240.0;
+  camera.base_camera_flag = true;
+  config->cam_configs.push_back(camera);
+
+  TargetConfig target;
+  target.target_idx = 0;
+  config->target_configs.push_back(target);
+  return config;
+}
+
+SystemConfig::Ptr CreateValidUnifiedConfig() {
+  auto config = CreateValidCameraOnlyConfig();
+  config->unified_calib_config.enable_unified_calib = true;
+
+  ImuConfig imu;
+  imu.file_name = "imu0.csv";
+  imu.body_frame_flag = true;
+  config->imu_configs.push_back(imu);
+
+  MagConfig magnetometer;
+  magnetometer.file_name = "mag0.csv";
+  config->mag_configs.push_back(magnetometer);
+  return config;
+}
+
 /// @brief Test fixture for system configuration tests.
 class SystemConfigTest : public ::testing::Test {
  protected:
   void SetUp() override {
     spdlog::set_level(spdlog::level::warn);
     spdlog::set_pattern("%^[%l]%$ %v");
-    base_dir_ = "../data/test_data_handheld";
-    output_path_ = base_dir_ + "/config_template.json";
+    base_dir_ = XR_UCALIB_TEST_DATA_DIR;
+    output_path_ =
+        std::string(XR_UCALIB_TEST_OUTPUT_DIR) + "/config_template.json";
     input_path_ = base_dir_ + "/input_config.json";
   }
 
@@ -74,6 +106,73 @@ TEST_F(SystemConfigTest, ReadSystemConfig) {
       << "Failed to read system config from JSON";
 
   spdlog::info("Successfully read system config from JSON.");
+}
+
+/// @brief Reject numerical settings that would make calibration undefined.
+TEST_F(SystemConfigTest, RejectsInvalidNumericSettings) {
+  using ConfigMutation = std::function<void(const SystemConfig::Ptr&)>;
+  const auto expect_invalid_camera_config = [](const ConfigMutation& mutate) {
+    auto config = CreateValidCameraOnlyConfig();
+    mutate(config);
+    EXPECT_FALSE(config->CheckAndPrintConfig());
+  };
+  const auto expect_invalid_unified_config = [](const ConfigMutation& mutate) {
+    auto config = CreateValidUnifiedConfig();
+    mutate(config);
+    EXPECT_FALSE(config->CheckAndPrintConfig());
+  };
+
+  expect_invalid_camera_config([](const auto& config) {
+    config->cam_calib_config.cam_down_sample_rate = 0;
+  });
+  expect_invalid_camera_config([](const auto& config) {
+    config->cam_calib_config.multi_thread_num = 0;
+  });
+  expect_invalid_camera_config([](const auto& config) {
+    config->cam_calib_config.ceres_max_iterations = 0;
+  });
+  expect_invalid_camera_config([](const auto& config) {
+    config->cam_configs[0].initial_focal_length = 0.0;
+  });
+  expect_invalid_camera_config(
+      [](const auto& config) { config->cam_configs[0].noise = 0.0; });
+  expect_invalid_camera_config([](const auto& config) {
+    config->cam_configs[0].down_sample_rate_ucalib = 0;
+  });
+  expect_invalid_camera_config([](const auto& config) {
+    config->target_configs[0].fiducial_size = 0.0;
+  });
+  expect_invalid_camera_config([](const auto& config) {
+    config->target_configs[0].fiducial_spacing =
+        std::numeric_limits<double>::quiet_NaN();
+  });
+  expect_invalid_camera_config(
+      [](const auto& config) { config->target_configs[0].fiducial_rows = 0; });
+
+  expect_invalid_unified_config([](const auto& config) {
+    config->unified_calib_config.spline_knot_interval = 0.0;
+  });
+  expect_invalid_unified_config([](const auto& config) {
+    config->unified_calib_config.gravity_magnitude = 0.0;
+  });
+  expect_invalid_unified_config([](const auto& config) {
+    config->unified_calib_config.multi_thread_num = 0;
+  });
+  expect_invalid_unified_config([](const auto& config) {
+    config->unified_calib_config.ceres_max_iterations = 0;
+  });
+  expect_invalid_unified_config(
+      [](const auto& config) { config->imu_configs[0].frequency_hz = 0.0; });
+  expect_invalid_unified_config(
+      [](const auto& config) { config->imu_configs[0].noise[0] = 0.0; });
+  expect_invalid_unified_config([](const auto& config) {
+    config->imu_configs[0].down_sample_rate_ucalib = 0;
+  });
+  expect_invalid_unified_config(
+      [](const auto& config) { config->mag_configs[0].noise = 0.0; });
+  expect_invalid_unified_config([](const auto& config) {
+    config->mag_configs[0].down_sample_rate_ucalib = 0;
+  });
 }
 
 }  // namespace

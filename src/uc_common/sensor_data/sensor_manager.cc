@@ -68,7 +68,7 @@ bool SensorManager::LoadSensorData(const SystemConfig::Ptr &system_config) {
       TargetCorner3DGenerator::Create();
 
   if (!target_generator->Generate(target_configs_)) {
-    spdlog::error("Fail to generate the target corners.");
+    spdlog::error("Failed to generate target corners.");
     return false;
   }
   target_corners_ = target_generator->GetTargetCorners();
@@ -175,7 +175,7 @@ bool SensorManager::LoadSensorData(const SystemConfig::Ptr &system_config) {
   for (const auto &imu_config : system_config->imu_configs) {
     std::string file_name = imu_config.file_name;
     if (file_name == "") {
-      spdlog::error("Imu config found with empty file_name.");
+      spdlog::error("IMU config found with empty file_name.");
       return false;
     }
 

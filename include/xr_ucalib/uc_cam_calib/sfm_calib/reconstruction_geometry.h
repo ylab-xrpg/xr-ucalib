@@ -28,8 +28,8 @@ namespace xr_ucalib {
 /**
  * @brief Reconstruction geometry storing 3D points and camera poses.
  *
- * This is a simple structure to hold the COLMAP SFM reconstruction results, to
- * facilitate further processing such as scaling and transforming the
+ * This is a simple structure that holds COLMAP SfM reconstruction results and
+ * facilitates further processing such as scaling and transforming the
  * reconstruction.
  */
 class ReconstructionGeometry {
@@ -75,7 +75,7 @@ class ReconstructionGeometry {
   // Reconstruction camera label.
   std::string label = "";
 
-  // 3D points reconstructed from SFM.
+  // 3D points reconstructed from SfM.
   std::map<int, Eigen::Vector3d> points3d;
 
   // Camera poses in the reconstruction, transformation from camera to world.

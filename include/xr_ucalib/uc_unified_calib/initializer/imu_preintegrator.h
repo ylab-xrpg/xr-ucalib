@@ -46,11 +46,11 @@ class ImuPreintegrator {
    * @param[in] bg Linearization point of gyroscope bias.
    * @param[in] acc_noise Accelerometer measurement noise standard deviation
    * (m/s^2, discrete time).
-   * @param[in] acc_b_noise Accelerometer bias random work noise standard
+   * @param[in] acc_b_noise Accelerometer bias random walk noise standard
    * deviation (m/s^2, discrete time).
    * @param[in] gyr_noise Gyroscope measurement noise standard deviation (rad/s,
    * discrete time).
-   * @param[in] gyr_b_noise Gyroscope bias random work noise standard deviation
+   * @param[in] gyr_b_noise Gyroscope bias random walk noise standard deviation
    * (rad/s, discrete time).
    */
   ImuPreintegrator(const Eigen::Vector3d &acc_start,
