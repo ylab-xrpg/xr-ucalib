@@ -15,6 +15,7 @@
 // clang-format off
 #include "xr_ucalib/uc_cam_calib/sfm_calib/sfm_calibrator.h"
 
+#include <algorithm>
 #include <atomic>
 #include <filesystem>
 #include <mutex>
@@ -198,8 +199,12 @@ bool SfmCalibrator::RunCalibration() {
   // Update camera intrinsics.
   for (auto& [label, reconstruction] : reconstructions) {
     auto cam_intrinsic = calib_parameters_->cam_intrinsics.at(label);
-    cam_intrinsic->parameters =
-        reconstruction->Cameras().begin()->second.Params();
+    const auto& colmap_camera = reconstruction->Cameras().begin()->second;
+    if (!ImportColmapCameraParameters(colmap_camera, cam_intrinsic)) {
+      spdlog::error("Failed to import COLMAP camera parameters for camera {}.",
+                    label);
+      return false;
+    }
   }
 
   spdlog::info("SFM calibration completed.");
@@ -261,7 +266,7 @@ bool SfmCalibrator::ConstructDatabase(const std::string& label,
 
   auto cam_intrinsic = calib_parameters_->cam_intrinsics.at(label);
   colmap::Camera colmap_cam;
-  if (!InitialColmapCamera(cam_intrinsic, colmap_cam)) {
+  if (!InitializeColmapCamera(cam_intrinsic, colmap_cam)) {
     spdlog::error("Failed to initialize COLMAP camera");
     return false;
   }
@@ -535,34 +540,92 @@ bool SfmCalibrator::RunMapper(const std::string& db_path,
   return true;
 }
 
-bool SfmCalibrator::InitialColmapCamera(
+bool SfmCalibrator::InitializeColmapCamera(
     const CamIntrinsicBase::Ptr& cam_intrinsic, colmap::Camera& colmap_cam) {
-  // Set initial camera intrinsic parameter with  default values.
-  // TODO: Use better initial values via camera initialization algorithms.
-  cam_intrinsic->parameters = std::vector<double>(
-      {static_cast<double>(cam_intrinsic->initial_focal_length),
-       static_cast<double>(cam_intrinsic->initial_focal_length),
-       static_cast<double>(cam_intrinsic->width) / 2.0,
-       static_cast<double>(cam_intrinsic->height) / 2.0, 0., 0., 0., 0.});
-
-  // Set COLMAP camera model and parameters.
-  if (cam_intrinsic->cam_model_type == CamModelType::RADTAN) {
-    colmap_cam.SetModelIdFromName("OPENCV");
-  } else if (cam_intrinsic->cam_model_type == CamModelType::EQUIDISTANT) {
-    colmap_cam.SetModelIdFromName("OPENCV_FISHEYE");
-  } else {
-    spdlog::error("Unsupported camera model type for COLMAP initialization.");
+  if (cam_intrinsic == nullptr) {
+    spdlog::error("Cannot initialize a null camera intrinsic.");
     return false;
   }
 
+  std::string colmap_model_name;
+  if (cam_intrinsic->cam_model_type == CamModelType::RADTAN) {
+    colmap_model_name = "OPENCV";
+  } else if (cam_intrinsic->cam_model_type == CamModelType::EQUIDISTANT ||
+             IsFisheye624Variant(cam_intrinsic->cam_model_type)) {
+    // The first four radial coefficients form an exact OPENCV_FISHEYE
+    // sub-model and provide a stable initialization for the full model.
+    colmap_model_name = "OPENCV_FISHEYE";
+  } else {
+    spdlog::error("Unsupported camera model type for COLMAP initialization: {}",
+                  CamModelTypeToString(cam_intrinsic->cam_model_type));
+    return false;
+  }
+
+  colmap_cam.SetModelIdFromName(colmap_model_name);
   colmap_cam.SetWidth(cam_intrinsic->width);
   colmap_cam.SetHeight(cam_intrinsic->height);
-
-  colmap_cam.Params().clear();
-  colmap_cam.Params() = cam_intrinsic->parameters;
-
+  colmap_cam.Params() = {
+      static_cast<double>(cam_intrinsic->initial_focal_length),
+      static_cast<double>(cam_intrinsic->initial_focal_length),
+      static_cast<double>(cam_intrinsic->width) / 2.0,
+      static_cast<double>(cam_intrinsic->height) / 2.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+  };
   colmap_cam.SetPriorFocalLength(false);
 
+  cam_intrinsic->parameters.assign(cam_intrinsic->parameter_size, 0.0);
+  std::copy_n(colmap_cam.Params().begin(), 4,
+              cam_intrinsic->parameters.begin());
+  return true;
+}
+
+bool SfmCalibrator::ImportColmapCameraParameters(
+    const colmap::Camera& colmap_cam,
+    const CamIntrinsicBase::Ptr& cam_intrinsic) {
+  if (cam_intrinsic == nullptr) {
+    spdlog::error("Cannot import COLMAP parameters into a null intrinsic.");
+    return false;
+  }
+
+  const std::string expected_model_name =
+      cam_intrinsic->cam_model_type == CamModelType::RADTAN ? "OPENCV"
+                                                            : "OPENCV_FISHEYE";
+  if (colmap_cam.ModelName() != expected_model_name) {
+    spdlog::error("Unexpected COLMAP model for {}: expected {}, got {}",
+                  CamModelTypeToString(cam_intrinsic->cam_model_type),
+                  expected_model_name, colmap_cam.ModelName());
+    return false;
+  }
+
+  if (IsFisheye624Variant(cam_intrinsic->cam_model_type)) {
+    constexpr size_t kFisheye624ParameterSize = 16;
+    if (cam_intrinsic->parameter_size !=
+            static_cast<int>(kFisheye624ParameterSize) ||
+        colmap_cam.Params().size() != 8) {
+      spdlog::error(
+          "Cannot embed OPENCV_FISHEYE parameters into Fisheye624: source "
+          "size {}, destination size {}",
+          colmap_cam.Params().size(), cam_intrinsic->parameter_size);
+      return false;
+    }
+    cam_intrinsic->parameters.assign(kFisheye624ParameterSize, 0.0);
+    std::copy(colmap_cam.Params().begin(), colmap_cam.Params().end(),
+              cam_intrinsic->parameters.begin());
+    return ZeroFisheye624ConstantParams(cam_intrinsic->cam_model_type,
+                                        &cam_intrinsic->parameters);
+  }
+
+  if (colmap_cam.Params().size() !=
+      static_cast<size_t>(cam_intrinsic->parameter_size)) {
+    spdlog::error("COLMAP/XR-UCalib parameter size mismatch for {}: {} vs {}",
+                  expected_model_name, colmap_cam.Params().size(),
+                  cam_intrinsic->parameter_size);
+    return false;
+  }
+  cam_intrinsic->parameters = colmap_cam.Params();
   return true;
 }
 

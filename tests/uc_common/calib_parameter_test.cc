@@ -74,5 +74,48 @@ TEST_F(CalibParameterTest, DefaultValuesAndSerialization) {
       << "Failed to load calibration parameters from JSON.";
 }
 
+/// @brief Fixed Fisheye624 priors must provide the complete parameter vector.
+TEST_F(CalibParameterTest, RejectsInvalidFisheyeIntrinsicPrior) {
+  auto system_config = xr_ucalib::SystemConfig::Create();
+  ASSERT_TRUE(system_config->FromJson(config_path_));
+  ASSERT_FALSE(system_config->cam_configs.empty());
+  auto& cam_config = system_config->cam_configs.front();
+  cam_config.cam_model_type = CamModelType::RAD_TAN_THIN_PRISM_FISHEYE;
+  cam_config.fix_intrinsic = true;
+  cam_config.intrinsic_prior.assign(15, 0.0);
+  system_config->sensor_data_dir = sensor_data_dir_;
+  system_config->workspace_dir = workspace_dir_;
+
+  auto sensor_manager = xr_ucalib::SensorManager::Create();
+  ASSERT_TRUE(sensor_manager->LoadSensorData(system_config));
+  auto calib_params = xr_ucalib::CalibParameters::Create();
+  EXPECT_FALSE(calib_params->SetUpDefaultValues(sensor_manager));
+}
+
+/// @brief Fisheye620 serialization preserves its model and disabled terms.
+TEST_F(CalibParameterTest, Fisheye620JsonRoundTrip) {
+  constexpr char kOutputPath[] = "/tmp/xr_ucalib_fisheye620_params.json";
+  auto calib_params = xr_ucalib::CalibParameters::Create();
+  auto intrinsic = CamRadTanThinPrismFisheyeIntrinsic::Create(
+      CamModelType::RAD_TAN_THIN_PRISM_FISHEYE_620);
+  intrinsic->width = 640;
+  intrinsic->height = 480;
+  intrinsic->parameters.assign(16, 1.0);
+  calib_params->cam_intrinsics["cam0"] = intrinsic;
+  ASSERT_TRUE(calib_params->ToJson(kOutputPath));
+
+  auto loaded = xr_ucalib::CalibParameters::Create();
+  ASSERT_TRUE(loaded->FromJson(kOutputPath));
+  const auto& loaded_intrinsic = loaded->cam_intrinsics.at("cam0");
+  EXPECT_EQ(loaded_intrinsic->cam_model_type,
+            CamModelType::RAD_TAN_THIN_PRISM_FISHEYE_620);
+  ASSERT_EQ(loaded_intrinsic->parameters.size(), 16);
+  for (const int index :
+       GetFisheye624ConstantParams(loaded_intrinsic->cam_model_type)) {
+    EXPECT_DOUBLE_EQ(loaded_intrinsic->parameters.at(index), 0.0);
+  }
+  std::remove(kOutputPath);
+}
+
 }  // namespace
 }  // namespace xr_ucalib

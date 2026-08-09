@@ -30,6 +30,7 @@
 #include <spdlog/spdlog.h>
 
 #include "xr_ucalib/uc_cam_calib/cam_rig_calib/cam_reproj_cost.hpp"
+#include "xr_ucalib/uc_common/calib_parameter/cam_unprojection.h"
 // clang-format on
 
 namespace xr_ucalib {
@@ -377,7 +378,7 @@ bool CamRigCalibrator::InitializeCamPoses(
       }
 
       std::vector<cv::Point3f> obj_pts;
-      std::vector<cv::Point2f> img_pts;
+      std::vector<cv::Point2d> img_pts;
       if (cam_map.find(best_cam_label) == cam_map.end()) continue;
       const auto& frame_ptr = cam_map.at(best_cam_label);
 
@@ -394,29 +395,8 @@ bool CamRigCalibrator::InitializeCamPoses(
 
       // Step 2.2: Undistort image points using the camera intrinsics.
       auto cam_intrinsic = calib_parameters_->cam_intrinsics.at(best_cam_label);
-      cv::Mat K = cv::Mat::eye(3, 3, CV_64F);
-      K.at<double>(0, 0) = cam_intrinsic->parameters[0];  // fx
-      K.at<double>(1, 1) = cam_intrinsic->parameters[1];  // fy
-      K.at<double>(0, 2) = cam_intrinsic->parameters[2];  // cx
-      K.at<double>(1, 2) = cam_intrinsic->parameters[3];  // cy
-
-      // Undistort image points.
-      cv::Mat D;
-      std::vector<cv::Point2f> undistorted_pts;
-
-      if (cam_intrinsic->cam_model_type == CamModelType::RADTAN) {
-        // k1, k2, p1, p2
-        D = (cv::Mat_<double>(4, 1) << cam_intrinsic->parameters[4],
-             cam_intrinsic->parameters[5], cam_intrinsic->parameters[6],
-             cam_intrinsic->parameters[7]);
-        cv::undistortPoints(img_pts, undistorted_pts, K, D);
-      } else if (cam_intrinsic->cam_model_type == CamModelType::EQUIDISTANT) {
-        // k1, k2, k3, k4
-        D = (cv::Mat_<double>(4, 1) << cam_intrinsic->parameters[4],
-             cam_intrinsic->parameters[5], cam_intrinsic->parameters[6],
-             cam_intrinsic->parameters[7]);
-        cv::fisheye::undistortPoints(img_pts, undistorted_pts, K, D);
-      } else {
+      std::vector<cv::Point2d> undistorted_pts;
+      if (!UndistortCameraPoints(cam_intrinsic, img_pts, &undistorted_pts)) {
         std::lock_guard<std::mutex> lock(io_mutex);
         std::printf("\n");
         spdlog::warn("Unsupported camera model type for PnP initialization: {}",
@@ -429,9 +409,9 @@ bool CamRigCalibrator::InitializeCamPoses(
       // these values blow up, causing PnP to fail. Filter out such unreliable
       // points.
       {
-        constexpr float kMaxNormalizedCoord = 3.0f;  // ~71° from optical axis
+        constexpr double kMaxNormalizedCoord = 3.0;  // ~71° from optical axis
         std::vector<cv::Point3f> filtered_obj;
-        std::vector<cv::Point2f> filtered_img;
+        std::vector<cv::Point2d> filtered_img;
         filtered_obj.reserve(obj_pts.size());
         filtered_img.reserve(undistorted_pts.size());
         for (size_t i = 0; i < undistorted_pts.size(); ++i) {
@@ -478,7 +458,7 @@ bool CamRigCalibrator::InitializeCamPoses(
       if (pnp_success) {
         // Collect inlier points for refinement.
         std::vector<cv::Point3f> inlier_obj_pts;
-        std::vector<cv::Point2f> inlier_img_pts;
+        std::vector<cv::Point2d> inlier_img_pts;
         for (int i = 0; i < inlier_mask.rows; ++i) {
           if (inlier_mask.at<int>(i)) {
             inlier_obj_pts.push_back(obj_pts[i]);
@@ -693,8 +673,25 @@ bool CamRigCalibrator::BuildAndOptimizeCeresProblem(
           Sophus::SO3d(cam_config.rot_q_Cb_Ci_prior);
     }
     if (cam_config.fix_intrinsic) {
-      calib_parameters_->cam_intrinsics.at(cam_label)->parameters =
-          cam_config.intrinsic_prior;
+      auto& cam_intrinsic = calib_parameters_->cam_intrinsics.at(cam_label);
+      if (cam_config.intrinsic_prior.size() !=
+          static_cast<size_t>(cam_intrinsic->parameter_size)) {
+        spdlog::error(
+            "Invalid intrinsic prior size for camera {} using model {}: "
+            "expected {}, got {}",
+            cam_label, CamModelTypeToString(cam_intrinsic->cam_model_type),
+            cam_intrinsic->parameter_size, cam_config.intrinsic_prior.size());
+        return false;
+      }
+      cam_intrinsic->parameters = cam_config.intrinsic_prior;
+    }
+    auto& cam_intrinsic = calib_parameters_->cam_intrinsics.at(cam_label);
+    if (!ZeroFisheye624ConstantParams(cam_intrinsic->cam_model_type,
+                                      &cam_intrinsic->parameters)) {
+      spdlog::error(
+          "Failed to normalize disabled Fisheye624 parameters for camera {}.",
+          cam_label);
+      return false;
     }
   }
 
@@ -797,6 +794,16 @@ bool CamRigCalibrator::BuildAndOptimizeCeresProblem(
     if (problem.HasParameterBlock(intrinsic_data)) {
       if (cam_config.fix_intrinsic) {
         problem.SetParameterBlockConstant(intrinsic_data);
+      } else {
+        const auto& cam_intrinsic =
+            calib_parameters_->cam_intrinsics.at(cam_label);
+        const auto constant_params =
+            GetFisheye624ConstantParams(cam_intrinsic->cam_model_type);
+        if (!constant_params.empty()) {
+          problem.SetManifold(intrinsic_data, new ceres::SubsetManifold(
+                                                  cam_intrinsic->parameter_size,
+                                                  constant_params));
+        }
       }
     }
   }

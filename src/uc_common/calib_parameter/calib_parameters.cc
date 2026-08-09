@@ -42,9 +42,22 @@ bool CalibParameters::SetUpDefaultValues(
       cam_intrinsic = CamRadtanIntrinsic::Create();
     } else if (cam_config.cam_model_type == CamModelType::EQUIDISTANT) {
       cam_intrinsic = CamEqdistIntrinsic::Create();
+    } else if (IsFisheye624Variant(cam_config.cam_model_type)) {
+      cam_intrinsic =
+          CamRadTanThinPrismFisheyeIntrinsic::Create(cam_config.cam_model_type);
     } else {
       spdlog::error("Unsupported camera model type: {}",
                     CamModelTypeToString(cam_config.cam_model_type));
+      return false;
+    }
+    if (cam_config.fix_intrinsic &&
+        cam_config.intrinsic_prior.size() !=
+            static_cast<size_t>(cam_intrinsic->parameter_size)) {
+      spdlog::error(
+          "Invalid intrinsic prior size for camera {} using model {}: "
+          "expected {}, got {}",
+          label, CamModelTypeToString(cam_config.cam_model_type),
+          cam_intrinsic->parameter_size, cam_config.intrinsic_prior.size());
       return false;
     }
     cam_intrinsic->initial_focal_length = cam_config.initial_focal_length;
@@ -162,22 +175,34 @@ bool CalibParameters::FromJson(const std::string& input_path) {
           cam_ptr = CamRadtanIntrinsic::Create();
         } else if (type == CamModelType::EQUIDISTANT) {
           cam_ptr = CamEqdistIntrinsic::Create();
+        } else if (IsFisheye624Variant(type)) {
+          cam_ptr = CamRadTanThinPrismFisheyeIntrinsic::Create(type);
         } else {
           spdlog::error("Unknown camera model type for {}: {}", label,
                         CamModelTypeToString(type));
-          continue;
+          cam_intrinsics.clear();
+          return false;
         }
 
         cam_ptr->width = j_cam.at("width").get<int>();
         cam_ptr->height = j_cam.at("height").get<int>();
         cam_ptr->parameters = j_cam.at("parameters").get<std::vector<double>>();
 
-        // Validate parameter size
+        // Reject malformed parameter vectors before exposing their data.
         if (cam_ptr->parameters.size() !=
             static_cast<size_t>(cam_ptr->parameter_size)) {
-          spdlog::warn("Parameter size mismatch for {}. Expected {}, got {}",
-                       label, cam_ptr->parameter_size,
-                       cam_ptr->parameters.size());
+          spdlog::error("Parameter size mismatch for {}. Expected {}, got {}",
+                        label, cam_ptr->parameter_size,
+                        cam_ptr->parameters.size());
+          cam_intrinsics.clear();
+          return false;
+        }
+        if (!ZeroFisheye624ConstantParams(type, &cam_ptr->parameters)) {
+          spdlog::error(
+              "Failed to normalize disabled Fisheye624 parameters for {}.",
+              label);
+          cam_intrinsics.clear();
+          return false;
         }
 
         cam_intrinsics[label] = cam_ptr;

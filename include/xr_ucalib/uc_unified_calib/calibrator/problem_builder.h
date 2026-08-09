@@ -16,6 +16,7 @@
 
 #include <ceres/ceres.h>
 
+#include <map>
 #include <memory>
 #include <string>
 
@@ -74,6 +75,22 @@ class ProblemBuilder {
                              const TargetCorner3D::Ptr& target_corners,
                              const CamConfig& cam_config,
                              const std::map<int, TargetConfig>& target_configs);
+
+  /**
+   * @brief Configure a camera intrinsic block before adding frame residuals.
+   *
+   * Applying priors before Ceres observes the parameter vector prevents its
+   * data pointer from being invalidated. This method also owns the subset
+   * manifold needed to keep Fisheye620 thin-prism terms fixed at zero.
+   *
+   * @param[out] problem Ceres problem that owns the parameter block.
+   * @param[in] label Camera label.
+   * @param[in] cam_config Camera configuration and optional fixed prior.
+   * @return true if the intrinsic parameters are valid and configured.
+   */
+  bool ConfigureCameraIntrinsicParameterBlock(ceres::Problem& problem,
+                                              const std::string& label,
+                                              const CamConfig& cam_config);
 
   /**
    * @brief Add IMU accelerometer residuals to the Ceres problem.
@@ -170,6 +187,8 @@ class ProblemBuilder {
       std::make_unique<ceres::SphereManifold<3>>();
   std::unique_ptr<ceres::LossFunction> huber_loss_function_ =
       std::make_unique<ceres::HuberLoss>(1.0);
+  std::map<std::string, std::unique_ptr<ceres::Manifold>>
+      cam_intrinsic_manifolds_;
 
   // Context holding all configuration and state resources
   Context context_;
