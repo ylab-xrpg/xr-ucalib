@@ -23,6 +23,7 @@
 
 #include "xr_ucalib/uc_common/calib_parameter/cam_radtan_intrinsic.hpp"
 #include "xr_ucalib/uc_common/calib_parameter/cam_eqdist_intrinsic.hpp"
+#include "xr_ucalib/uc_common/calib_parameter/cam_radtan_thin_prism_fisheye_intrinsic.hpp"
 #include "xr_ucalib/uc_common/calib_parameter/imu_intrinsic.h"
 #include "xr_ucalib/uc_common/calib_parameter/mag_intrinsic.h"
 #include "xr_ucalib/uc_common/config/json_adapter.hpp"

@@ -113,15 +113,28 @@ class SfmCalibrator {
                  ReconstructionPtr& reconstruction);
 
   /**
-   * @brief Initialize COLMAP camera model from given camera intrinsic
-   * parameters.
-   *s
-   * @param[in] cam_intrinsic Camera intrinsic parameters.
-   * @param[in] colmap_cam Output COLMAP camera model to be initialized.
-   * @return[out] true If initialization is successful, false otherwise.
+   * @brief Initialize a COLMAP camera from an XR-UCalib camera model.
+   *
+   * Fisheye624 variants use OPENCV_FISHEYE as an eight-parameter SfM
+   * surrogate because the project's COLMAP version does not provide the full
+   * FisheyeRadTanThinPrism model.
+   *
+   * @param[in,out] cam_intrinsic Camera intrinsics to initialize.
+   * @param[out] colmap_cam COLMAP camera to initialize.
+   * @return true if initialization is successful, false otherwise.
    */
-  bool InitialColmapCamera(const CamIntrinsicBase::Ptr& cam_intrinsic,
-                           colmap::Camera& colmap_cam);
+  bool InitializeColmapCamera(const CamIntrinsicBase::Ptr& cam_intrinsic,
+                              colmap::Camera& colmap_cam);
+
+  /**
+   * @brief Import optimized COLMAP parameters into an XR-UCalib camera model.
+   *
+   * @param[in] colmap_cam Optimized COLMAP camera.
+   * @param[out] cam_intrinsic Destination XR-UCalib camera intrinsics.
+   * @return true if the model and parameter dimensions are compatible.
+   */
+  bool ImportColmapCameraParameters(const colmap::Camera& colmap_cam,
+                                    const CamIntrinsicBase::Ptr& cam_intrinsic);
 
   /**
    * @brief Match keypoints between two camera frames based on landmark IDs to

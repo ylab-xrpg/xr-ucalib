@@ -24,6 +24,65 @@
 
 namespace xr_ucalib {
 
+bool ProblemBuilder::ConfigureCameraIntrinsicParameterBlock(
+    ceres::Problem& problem, const std::string& label,
+    const CamConfig& cam_config) {
+  auto intrinsic_iter = context_.calib_parameters->cam_intrinsics.find(label);
+  if (intrinsic_iter == context_.calib_parameters->cam_intrinsics.end()) {
+    spdlog::error("Camera intrinsic parameters not found for {}.", label);
+    return false;
+  }
+  auto& cam_intrinsic = intrinsic_iter->second;
+
+  if (cam_config.fix_intrinsic) {
+    if (cam_config.intrinsic_prior.size() !=
+        static_cast<size_t>(cam_intrinsic->parameter_size)) {
+      spdlog::error(
+          "Invalid intrinsic prior size for camera {} using model {}: "
+          "expected {}, got {}",
+          label, CamModelTypeToString(cam_intrinsic->cam_model_type),
+          cam_intrinsic->parameter_size, cam_config.intrinsic_prior.size());
+      return false;
+    }
+    cam_intrinsic->parameters = cam_config.intrinsic_prior;
+  }
+
+  if (!ZeroFisheye624ConstantParams(cam_intrinsic->cam_model_type,
+                                    &cam_intrinsic->parameters)) {
+    spdlog::error(
+        "Failed to normalize disabled Fisheye624 parameters for camera {}.",
+        label);
+    return false;
+  }
+
+  double* const intrinsic_data = cam_intrinsic->parameters.data();
+  if (!problem.HasParameterBlock(intrinsic_data)) {
+    problem.AddParameterBlock(intrinsic_data, cam_intrinsic->parameter_size);
+  }
+
+  if (cam_config.fix_intrinsic ||
+      context_.system_config->unified_calib_config.fix_camera_intrinsics) {
+    problem.SetParameterBlockConstant(intrinsic_data);
+    return true;
+  }
+
+  const auto constant_params =
+      GetFisheye624ConstantParams(cam_intrinsic->cam_model_type);
+  if (constant_params.empty()) {
+    return true;
+  }
+
+  auto manifold_iter = cam_intrinsic_manifolds_.find(label);
+  if (manifold_iter == cam_intrinsic_manifolds_.end()) {
+    auto manifold = std::make_unique<ceres::SubsetManifold>(
+        cam_intrinsic->parameter_size, constant_params);
+    manifold_iter =
+        cam_intrinsic_manifolds_.emplace(label, std::move(manifold)).first;
+  }
+  problem.SetManifold(intrinsic_data, manifold_iter->second.get());
+  return true;
+}
+
 bool ProblemBuilder::AddCamReprojResiduals(
     ceres::Problem& problem, const std::string& label,
     const CamFrame::Ptr& cam_frame, const TargetCorner3D::Ptr& target_corners,
@@ -204,14 +263,6 @@ bool ProblemBuilder::AddCamReprojResiduals(
     }
   }
 
-  if (cam_config.fix_intrinsic &&
-      context_.calib_parameters->cam_intrinsics.at(label)->parameter_size ==
-          static_cast<int>(cam_config.intrinsic_prior.size())) {
-    context_.calib_parameters->cam_intrinsics.at(label)->parameters =
-        cam_config.intrinsic_prior;
-    problem.SetParameterBlockConstant(cam_intrinsic_ptr);
-  }
-
   // Fix spatial and temporal extrinsics of non-base cameras.
   // This requires all non-base cameras to be accurately calibrated beforehand.
   if (context_.system_config->unified_calib_config.fix_camera_extrinsics &&
@@ -219,10 +270,6 @@ bool ProblemBuilder::AddCamReprojResiduals(
     problem.SetParameterBlockConstant(trans_Cb_Ci_ptr);
     problem.SetParameterBlockConstant(rot_Cb_Ci_ptr);
     problem.SetParameterBlockConstant(toff_Cb_Ci_ptr);
-  }
-
-  if (context_.system_config->unified_calib_config.fix_camera_intrinsics) {
-    problem.SetParameterBlockConstant(cam_intrinsic_ptr);
   }
 
   // Step 3.2: Target related parameters.

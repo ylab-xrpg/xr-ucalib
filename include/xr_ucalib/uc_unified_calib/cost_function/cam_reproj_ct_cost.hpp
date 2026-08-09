@@ -19,6 +19,7 @@
 
 #include "xr_ucalib/uc_common/calib_parameter/cam_eqdist_intrinsic.hpp"
 #include "xr_ucalib/uc_common/calib_parameter/cam_radtan_intrinsic.hpp"
+#include "xr_ucalib/uc_common/calib_parameter/cam_radtan_thin_prism_fisheye_intrinsic.hpp"
 #include "xr_ucalib/uc_common/sensor_data/sensor_data_types.h"
 #include "xr_ucalib/uc_unified_calib/spline/ceres_spline_helper_jet.hpp"
 #include "xr_ucalib/uc_unified_calib/spline/spline_meta.hpp"
@@ -117,11 +118,6 @@ struct CamReprojCtCost {
         Eigen::Map<const Sophus::SO3<T>>(params[ROT_W_Ti_OFFSET]);
     T toff_B_Cb = params[TOFF_B_Cb_OFFSET][0];
     T toff_Cb_Ci = params[TOFF_Cb_Ci_OFFSET][0];
-    // TODO: The dimension of camera intrinsic parameters may vary for different
-    // camera models.
-    const Eigen::Matrix<T, 8, 1> cam_intrinsics =
-        Eigen::Map<const Eigen::Matrix<T, 8, 1>>(params[CAM_INTRINSIC_OFFSET]);
-
     // Determine the address offset for spline knots.
     T t_Ci = toff_B_Cb + toff_Cb_Ci + T(timestamp_);
     // For measurements outside the B-spline time range, we simply set their
@@ -162,17 +158,23 @@ struct CamReprojCtCost {
 
     // Project the 3D point to 2D image plane.
     Eigen::Matrix<T, 2, 1> projected_point_2d;
-    // Now we only support radial-tangential and equidistant camera models.
+    // Project directly from the dynamic intrinsic parameter block so camera
+    // models with different dimensions share the same residual implementation.
     if (auto ptr =
             std::dynamic_pointer_cast<CamRadtanIntrinsic>(cam_intrinsic_)) {
       CamRadtanIntrinsic::Space2Image(
           trans_W_Ci, rot_W_Ci.unit_quaternion(), target_point_3d_in_W,
-          cam_intrinsics.data(), projected_point_2d);
+          params[CAM_INTRINSIC_OFFSET], projected_point_2d);
     } else if (auto ptr = std::dynamic_pointer_cast<CamEqdistIntrinsic>(
                    cam_intrinsic_)) {
       CamEqdistIntrinsic::Space2Image(
           trans_W_Ci, rot_W_Ci.unit_quaternion(), target_point_3d_in_W,
-          cam_intrinsics.data(), projected_point_2d);
+          params[CAM_INTRINSIC_OFFSET], projected_point_2d);
+    } else if (auto ptr = std::dynamic_pointer_cast<
+                   CamRadTanThinPrismFisheyeIntrinsic>(cam_intrinsic_)) {
+      CamRadTanThinPrismFisheyeIntrinsic::Space2Image(
+          trans_W_Ci, rot_W_Ci.unit_quaternion(), target_point_3d_in_W,
+          params[CAM_INTRINSIC_OFFSET], projected_point_2d);
     } else {
       // Unsupported camera model.
       return false;

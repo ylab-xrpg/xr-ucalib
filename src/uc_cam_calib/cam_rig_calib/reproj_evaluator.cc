@@ -32,6 +32,7 @@
 #include "xr_ucalib/uc_cam_calib/cam_rig_calib/cam_reproj_cost.hpp"
 #include "xr_ucalib/uc_common/calib_parameter/cam_eqdist_intrinsic.hpp"
 #include "xr_ucalib/uc_common/calib_parameter/cam_radtan_intrinsic.hpp"
+#include "xr_ucalib/uc_common/calib_parameter/cam_radtan_thin_prism_fisheye_intrinsic.hpp"
 // clang-format on
 
 namespace xr_ucalib {
@@ -763,6 +764,12 @@ bool ReprojEvaluator::SaveReprojImage(
           CamEqdistIntrinsic::Space2Image(trans_W_Ci, rot_W_Ci, p_W,
                                           cam_intrinsic->parameters.data(),
                                           projected_point_2d);
+          projected = true;
+        } else if (auto ptr = std::dynamic_pointer_cast<
+                       CamRadTanThinPrismFisheyeIntrinsic>(cam_intrinsic)) {
+          CamRadTanThinPrismFisheyeIntrinsic::Space2Image(
+              trans_W_Ci, rot_W_Ci, p_W, cam_intrinsic->parameters.data(),
+              projected_point_2d);
           projected = true;
         }
 

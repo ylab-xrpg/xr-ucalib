@@ -21,6 +21,7 @@
 
 #include "xr_ucalib/uc_common/calib_parameter/cam_eqdist_intrinsic.hpp"
 #include "xr_ucalib/uc_common/calib_parameter/cam_radtan_intrinsic.hpp"
+#include "xr_ucalib/uc_common/calib_parameter/cam_radtan_thin_prism_fisheye_intrinsic.hpp"
 // clang-format on
 
 namespace xr_ucalib {
@@ -36,18 +37,20 @@ class CamReprojCost {
         iamge_point2d_(iamge_point2d),
         weight_(weight) {}
 
-  // Factory method to create a Ceres cost function instance.
-  // TODO: The camera model in our system currently only supports 'radtan' and
-  // 'equidistant', which have 8 intrinsic parameters. So we hardcode the size
-  // of the intrinsic parameter block to 8 here. To support more camera models,
-  // we may need to generalize this part.
+  // Factory method to create a Ceres cost function with the model-specific
+  // intrinsic parameter block size.
   static ceres::CostFunction* Create(const CamIntrinsicBase::Ptr& cam_intrinsic,
                                      const Eigen::Vector3d& target_point3d,
                                      const Eigen::Vector2d& iamge_point2d,
                                      const double& weight = 1.0) {
+    auto* functor =
+        new CamReprojCost(cam_intrinsic, target_point3d, iamge_point2d, weight);
+    if (IsFisheye624Variant(cam_intrinsic->cam_model_type)) {
+      return new ceres::AutoDiffCostFunction<CamReprojCost, 2, 3, 4, 3, 4, 16,
+                                             3, 4>(functor);
+    }
     return new ceres::AutoDiffCostFunction<CamReprojCost, 2, 3, 4, 3, 4, 8, 3,
-                                           4>(new CamReprojCost(
-        cam_intrinsic, target_point3d, iamge_point2d, weight));
+                                           4>(functor);
   }
 
   /**
@@ -102,6 +105,11 @@ class CamReprojCost {
       CamEqdistIntrinsic::Space2Image(trans_W_Ci, rot_W_Ci,
                                       target_point_3d_in_W, cam_intrinsics_ptr,
                                       projected_point_2d);
+    } else if (auto ptr = std::dynamic_pointer_cast<
+                   CamRadTanThinPrismFisheyeIntrinsic>(cam_intrinsic_)) {
+      CamRadTanThinPrismFisheyeIntrinsic::Space2Image(
+          trans_W_Ci, rot_W_Ci, target_point_3d_in_W, cam_intrinsics_ptr,
+          projected_point_2d);
     } else {
       // Unsupported camera model.
       return false;

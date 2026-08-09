@@ -32,6 +32,7 @@
 #include <spdlog/spdlog.h>
 #include <opencv2/opencv.hpp>
 
+#include "xr_ucalib/uc_common/calib_parameter/cam_unprojection.h"
 #include "xr_ucalib/uc_unified_calib/calibrator/calibration_validator.h"
 #include "xr_ucalib/uc_unified_calib/calibrator/problem_builder.h"
 #include "xr_ucalib/uc_unified_calib/initializer/i2p_extrinsic_initializer.h"
@@ -434,6 +435,14 @@ bool UnifiedCalibrator::BuildAndOptimizeCereProblem() {
     const int down_sample_rate =
         cam_configs.at(cam_label).down_sample_rate_ucalib;
 
+    if (!problem_builder->ConfigureCameraIntrinsicParameterBlock(
+            problem, cam_label, cam_configs.at(cam_label))) {
+      spdlog::error(
+          "Failed to configure intrinsic parameter block for camera {}.",
+          cam_label);
+      return false;
+    }
+
     for (const auto& cam_frame : cam_seq->frames) {
       if ((frame_idx++) % down_sample_rate != 0) continue;
 
@@ -764,28 +773,8 @@ bool UnifiedCalibrator::InitializeBaseTrajectory(
       // ===========================================================================
 
       // Step 4.2: Undistort image points.
-      cv::Mat K = cv::Mat::eye(3, 3, CV_64F);
-      K.at<double>(0, 0) = cam_intr->parameters[0];  // fx
-      K.at<double>(1, 1) = cam_intr->parameters[1];  // fy
-      K.at<double>(0, 2) = cam_intr->parameters[2];  // cx
-      K.at<double>(1, 2) = cam_intr->parameters[3];  // cy
-
-      cv::Mat D;
       std::vector<cv::Point2d> undistorted_pts;
-
-      if (cam_intr->cam_model_type == CamModelType::RADTAN) {
-        // k1, k2, p1, p2
-        D = (cv::Mat_<double>(4, 1) << cam_intr->parameters[4],
-             cam_intr->parameters[5], cam_intr->parameters[6],
-             cam_intr->parameters[7]);
-        cv::undistortPoints(image_points, undistorted_pts, K, D);
-      } else if (cam_intr->cam_model_type == CamModelType::EQUIDISTANT) {
-        // k1, k2, k3, k4
-        D = (cv::Mat_<double>(4, 1) << cam_intr->parameters[4],
-             cam_intr->parameters[5], cam_intr->parameters[6],
-             cam_intr->parameters[7]);
-        cv::fisheye::undistortPoints(image_points, undistorted_pts, K, D);
-      } else {
+      if (!UndistortCameraPoints(cam_intr, image_points, &undistorted_pts)) {
         std::lock_guard<std::mutex> lock(io_mutex);
         std::printf("\n");
         spdlog::warn("Unsupported camera model type for PnP initialization: {}",
