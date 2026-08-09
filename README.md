@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="assets/logo.svg" alt="XR-UCalib" width="600"/>
+	<img src="assets/logo.svg" alt="XR-UCalib" width="400"/>
 </p>
 
 <h2 align="center">
@@ -40,8 +40,10 @@ System flowchart is shown below.
 	- [Build XR-UCalib](#build-xr-ucalib)
 - [🚀 Run the Project](#-run-the-project)
 	- [Run Module Tests](#run-module-tests)
+	- [Command-line Interface](#command-line-interface)
 	- [Run with Example Data](#run-with-example-data)
 	- [Run with Your Own Data](#run-with-your-own-data)
+- [⚙️ Configuration](#️-configuration)
 - [📝 Reference](#-reference)
 - [📜 License](#-license)
 - [🤝 Notes](#-notes)
@@ -221,6 +223,39 @@ artifacts.
 ./build/bin/run_tests
 ```
 
+Tests read the tracked example inputs but write generated configurations,
+calibration results, and workspace files under `/tmp/xr_ucalib_tests`. Running
+the test suite therefore does not modify `data/test_data_handheld`.
+
+### Command-line Interface
+
+The executable accepts either a dataset directory or four explicit paths:
+
+```text
+run_unified_calibration <work_directory>
+run_unified_calibration <config_path> <sensor_data_dir> <workspace_dir> <output_path>
+```
+
+The compact form resolves the following paths automatically:
+
+```text
+<work_directory>/input_config.json
+<work_directory>/sensor_data
+<work_directory>/ucalib_ws
+<work_directory>/output_calib_params.json
+```
+
+The explicit form is useful when generated artifacts must be kept outside the
+dataset directory. For example:
+
+```bash
+./build/bin/run_unified_calibration \
+	data/test_data_handheld/input_config.json \
+	data/test_data_handheld/sensor_data \
+	/tmp/xr_ucalib_workspace \
+	/tmp/xr_ucalib_result.json
+```
+
 ### Run with Example Data
 
 ```bash
@@ -259,12 +294,35 @@ Data conventions:
 	`timestamp(ns),mag_x,mag_y,mag_z`
 - Magnetometer input is expected to be a normalized vector after intrinsic correction (e.g., ellipsoid-fitting calibration).
 
-The calibrator behavior is fully configured by [input_config.json](data/test_data_handheld/input_config.json).
-Detailed parameter descriptions are available in [system_config.h](include/xr_ucalib/uc_common/config/system_config.h).
+The calibrator behavior is fully configured by
+[input_config.json](data/test_data_handheld/input_config.json).
 
-Calibration outputs are saved to [output_calib_params.json](data/test_data_handheld/output_calib_params.json) in your dataset folder (for example, `data/test_data_handheld/output_calib_params.json`).
-Estimated parameters include spatiotemporal extrinsics, camera intrinsics, and IMU intrinsic parameters.
-Parameter and coordinate-frame definitions can be found in [calib_parameters.h](include/xr_ucalib/uc_common/calib_parameter/calib_parameters.h).
+---
+
+## ⚙️ Configuration
+
+XR-UCalib is configured through `input_config.json`. Start from the
+[example configuration](data/test_data_handheld/input_config.json) and see the
+[complete configuration reference](docs/configuration.md) for every field,
+default value, unit, prior, and coordinate-frame convention.
+
+Key requirements:
+
+- Configure at least one camera and one fiducial target.
+- Exactly one camera must set `base_camera_flag` to `true`.
+- Unified calibration requires at least one IMU, with exactly one
+  `body_frame_flag` set to `true`.
+- The target with the smallest `target_idx` defines the world frame.
+
+Supported camera models are `RADTAN`, `EQUIDISTANT`, Fisheye624
+(`RAD_TAN_THIN_PRISM_FISHEYE`), and Fisheye620
+(`RAD_TAN_THIN_PRISM_FISHEYE_620`). See the configuration reference for their
+intrinsic parameter order and fixed-prior requirements.
+
+Final parameters are saved to `output_calib_params.json`. Reusable detections,
+SfM workspaces, reprojection reports, and unified-calibration diagnostics are
+written under `ucalib_ws`; use the explicit four-path command form to place
+these generated files elsewhere.
 
 ---
 

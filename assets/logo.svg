@@ -1,36 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="110" viewBox="0 0 1400 110" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="116" viewBox="0 0 500 116" role="img" aria-labelledby="title desc">
   <title id="title">XR-UCalib Logo</title>
-  <desc id="desc">Gradient text logo for XR-UCalib.</desc>
+  <desc id="desc">XR-UCalib wordmark in a blue-to-violet gradient.</desc>
 
   <defs>
-    <linearGradient id="gradText" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#00C6FF"/>
-      <stop offset="52%" stop-color="#0072FF"/>
-      <stop offset="100%" stop-color="#7F00FF"/>
+    <linearGradient id="wordmark-gradient" x1="0%" y1="20%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#0891B2"/>
+      <stop offset="48%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
     </linearGradient>
 
-    <filter id="glow" x="-20%" y="-50%" width="140%" height="220%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.15  0 0 0 0 0.48  0 0 0 0 1  0 0 0 0.55 0"/>
-      <feMerge>
-        <feMergeNode/>
-        <feMergeNode in="SourceGraphic"/>
-      </feMerge>
+    <filter id="wordmark-shadow" x="-10%" y="-20%" width="120%" height="150%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#1D4ED8" flood-opacity="0.16"/>
     </filter>
   </defs>
 
-  <rect width="100%" height="100%" fill="none"/>
-
   <text
-    x="700"
-    y="103"
+    x="250"
+    y="87"
     text-anchor="middle"
-    font-family="Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-    font-size="116"
-    font-weight="900"
-    letter-spacing="2"
-    fill="url(#gradText)"
-    filter="url(#glow)">
-    XR-UCalib
+    font-family="Times New Roman, Nimbus Roman, Liberation Serif, Times, serif"
+    font-size="88"
+    font-weight="700"
+    letter-spacing="-1.2"
+    fill="url(#wordmark-gradient)"
+    filter="url(#wordmark-shadow)">
+    <tspan font-weight="700" letter-spacing="-1.8">XR</tspan><tspan font-weight="400">-</tspan><tspan font-style="italic" letter-spacing="-1.8">UCalib</tspan>
   </text>
 </svg>
