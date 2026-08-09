@@ -61,7 +61,6 @@
       "body_frame_flag": true,
       "down_sample_rate_ucalib": 5,
       "file_name": "imu0.csv",
-      "fix_intrinsic": false,
       "fix_spatial_extrinsic": false,
       "fix_temporal_extrinsic": false,
       "frequency_hz": 1000.0,
@@ -77,7 +76,6 @@
       "body_frame_flag": false,
       "down_sample_rate_ucalib": 5,
       "file_name": "imu1.csv",
-      "fix_intrinsic": false,
       "fix_spatial_extrinsic": false,
       "fix_temporal_extrinsic": false,
       "frequency_hz": 500.0,
@@ -115,8 +113,7 @@
       "fiducial_type": "APRILTAG",
       "fix_spatial_extrinsic": false,
       "start_id": 144,
-      "target_idx": 1,
-      "world_frame_flag": true
+      "target_idx": 1
     },
     {
       "fiducial_cols": 6,
@@ -126,8 +123,7 @@
       "fiducial_type": "APRILTAG",
       "fix_spatial_extrinsic": false,
       "start_id": 288,
-      "target_idx": 2,
-      "world_frame_flag": false
+      "target_idx": 2
     },
     {
       "fiducial_cols": 6,
@@ -137,8 +133,7 @@
       "fiducial_type": "APRILTAG",
       "fix_spatial_extrinsic": false,
       "start_id": 432,
-      "target_idx": 3,
-      "world_frame_flag": false
+      "target_idx": 3
     }
   ],
   "unified_calib_config": {
