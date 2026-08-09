@@ -109,7 +109,7 @@ bool CamDataLoader::ShowDetections(bool step_mode) {
     std::string display_title =
         "Camera Detections for " + filename + " (may be resized)";
     const std::string kWindowName = "Camera Detections";
-    
+
     cv::imshow(kWindowName, img);
     cv::setWindowTitle(kWindowName, display_title);
 

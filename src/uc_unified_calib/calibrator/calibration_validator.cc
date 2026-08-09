@@ -1073,12 +1073,11 @@ bool CalibrationValidator::ValidateAndSaveResults(
       }
 
       per_frame_file << "image=" << filename << ", timestamp=" << ts_str
-             << ", points=" << frame_stats.count
-             << ", mean_px=" << std::fixed << std::setprecision(6)
-             << frame_stats.mean
-             << ", median_px=" << frame_stats.median
-             << ", min_px=" << frame_stats.min
-             << ", max_px=" << frame_stats.max << "\n";
+                     << ", points=" << frame_stats.count
+                     << ", mean_px=" << std::fixed << std::setprecision(6)
+                     << frame_stats.mean << ", median_px=" << frame_stats.median
+                     << ", min_px=" << frame_stats.min
+                     << ", max_px=" << frame_stats.max << "\n";
     }
   }
 

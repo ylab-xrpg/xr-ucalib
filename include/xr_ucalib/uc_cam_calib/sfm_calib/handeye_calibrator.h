@@ -34,7 +34,7 @@ struct StampedPose {
  *
  * This is a helper class that estimates the extrinsic parameters between camera
  * body frames and aligns them to a common world frame, based on the pose
- * sequences obtained for independent SFM calibration for each camera.
+ * sequences obtained from independent SfM calibration for each camera.
  */
 class HandEyeCalibrator {
  public:

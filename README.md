@@ -73,12 +73,11 @@ docker run -it \
 	/bin/bash
 
 # 4) Build project
-mkdir -p build && cd build
-cmake .. && make -j"$(nproc)"
+cmake -S . -B build
+cmake --build build -j"$(nproc)"
 
 # 5) Run example
-cd ../bin
-./run_unified_calibration ../data/test_data_handheld
+./build/bin/run_unified_calibration data/test_data_handheld
 ```
 
 ---
@@ -204,11 +203,13 @@ After environment setup (both Docker and manual use the same build flow):
 
 ```bash
 cd xr_ucalib
-mkdir -p build
-cd build
-cmake ..
-make -j"$(nproc)"
+cmake -S . -B build
+cmake --build build -j"$(nproc)"
 ```
+
+Executables and libraries are generated under `build/bin` and `build/lib`,
+respectively. You can remove the entire `build` directory to clean all build
+artifacts.
 
 ---
 
@@ -217,15 +218,13 @@ make -j"$(nproc)"
 ### Run Module Tests
 
 ```bash
-cd bin
-./run_tests
+./build/bin/run_tests
 ```
 
 ### Run with Example Data
 
 ```bash
-cd bin
-./run_unified_calibration ../data/test_data_handheld
+./build/bin/run_unified_calibration data/test_data_handheld
 ```
 
 > To reduce repository size, the example dataset does not include original camera images.

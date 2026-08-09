@@ -30,7 +30,8 @@ class MagDataLoader : public DataLoaderBase {
   static Ptr Create() { return Ptr(new MagDataLoader()); }
 
   // Override Load method to load Magnetometer data from file.
-  // Requires input magnetometer data to be intrinsically calibrated (approx. unit vectors).
+  // Requires input magnetometer data to be intrinsically calibrated (approx.
+  // unit vectors).
   bool Load(const std::string& data_path) override;
 
   // Get the loaded magnetometer sequence.

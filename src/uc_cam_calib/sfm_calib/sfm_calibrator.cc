@@ -17,7 +17,9 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <filesystem>
+#include <limits>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -42,7 +44,7 @@
 namespace xr_ucalib {
 
 bool SfmCalibrator::RunCalibration() {
-  spdlog::info("------------------- SFM Calibration -------------------");
+  spdlog::info("------------------- SfM Calibration -------------------");
 
   if (system_config_->workspace_dir == "") {
     spdlog::error(
@@ -54,7 +56,7 @@ bool SfmCalibrator::RunCalibration() {
   if (!(calib_parameters_->param_status &
         CalibParameters::ParamStatus::SETUP)) {
     spdlog::error(
-        "Calibration parameters must be set up before SFM calibration. Current "
+        "Calibration parameters must be set up before SfM calibration. Current "
         "param_status: {}",
         static_cast<int>(calib_parameters_->param_status));
     return false;
@@ -62,7 +64,7 @@ bool SfmCalibrator::RunCalibration() {
 
   // ===========================================================================
 
-  // Step 1: Perform SFM for each camera independently.
+  // Step 1: Perform SfM for each camera independently.
   auto& cam_sequences = sensor_manager_->GetAllCamSequences();
 
   // Map for storing reconstruction results for each camera.
@@ -72,7 +74,7 @@ bool SfmCalibrator::RunCalibration() {
 
   // Iterate over each camera sequence.
   for (auto const& [label, cam_seq] : cam_sequences) {
-    spdlog::info(" - Starting SFM calibration for camera: {}.", label);
+    spdlog::info(" - Starting SfM calibration for camera: {}.", label);
 
     ReconstructionPtr reconstruction;
     // Map from COLMAP image IDs to camera frames.
@@ -91,13 +93,13 @@ bool SfmCalibrator::RunCalibration() {
       return false;
     }
 
-    // Step 1.2: Run COLMAP mapper to perform SFM.
+    // Step 1.2: Run COLMAP mapper to perform SfM.
     if (!RunMapper(db_path, img_map, curr_work_dir, reconstruction)) {
       spdlog::error("Failed to run mapper for camera: {}.", label);
       return false;
     }
 
-    spdlog::info("SFM for {} completed, #Images: {}, #3D Points: {}.", label,
+    spdlog::info("SfM for {} completed, #Images: {}, #3D Points: {}.", label,
                  reconstruction->NumImages(), reconstruction->NumPoints3D());
 
     // Store reconstruction result.
@@ -182,7 +184,7 @@ bool SfmCalibrator::RunCalibration() {
 
   // ===========================================================================
 
-  // Step 5: Update calibration parameters with SFM results and print them.
+  // Step 5: Update calibration parameters with SfM results and print them.
   // Update camera extrinsics.
   for (auto& [label, T_Cb_Ci] : T_Cb_Ci_map) {
     calib_parameters_->trans_Cb_Ci[label] = T_Cb_Ci.block<3, 1>(0, 3);
@@ -207,9 +209,9 @@ bool SfmCalibrator::RunCalibration() {
     }
   }
 
-  spdlog::info("SFM calibration completed.");
+  spdlog::info("SfM calibration completed.");
 
-  spdlog::info("--------------- SFM Calibration Results ---------------");
+  spdlog::info("--------------- SfM Calibration Results ---------------");
 
   // Print the results.
   PrintCalibrationResults();
@@ -292,7 +294,7 @@ bool SfmCalibrator::ConstructDatabase(const std::string& label,
 
     colmap::FeatureKeypoints colmap_kps;
     // Convert keypoints to COLMAP format. The COLMAP keypoint index
-    // corresponds to the order as which they appear in the CamFrame's
+    // corresponds to the order in which they appear in the CamFrame's
     // keypoints map.
     for (const auto& [landmark_id, kp] : cam_frame->keypoints) {
       colmap_kps.push_back(colmap::FeatureKeypoint(kp.x(), kp.y()));
@@ -435,7 +437,7 @@ bool SfmCalibrator::ConstructDatabase(const std::string& label,
   if (failed_pairs.load() * 2 > successful_pairs) {
     spdlog::warn(
         "Too many failed image pairs in keypoint matching (failed: {} vs "
-        "successful: {}). SFM calibration may fail.",
+        "successful: {}). SfM calibration may fail.",
         failed_pairs.load(), successful_pairs);
   }
 
@@ -660,7 +662,7 @@ bool SfmCalibrator::ConvertAndScaleReconstruction(
   recon_geometry->label = label;
 
   // Pre-compute a mapping from COLMAP point2D index to our landmark ID for
-  // each image. The COLMAP point2D index corresponds to the order as which
+  // each image. The COLMAP point2D index corresponds to the order in which
   // they appear in the CamFrame's keypoints map. And our landmark ID is the
   // unique identifier corresponding to calibration target corners.
   std::map<colmap::image_t, std::vector<int>> image_id_to_landmark_ids;
@@ -847,6 +849,20 @@ bool SfmCalibrator::ConvertAndScaleReconstruction(
           "Camera {}: Insufficient edges for target {} ({} < {}) to estimate "
           "scale. Skipping.",
           label, target_idx, lengths.size(), kMinEdgesThreshold);
+      continue;
+    }
+
+    const bool all_lengths_valid =
+        std::all_of(lengths.begin(), lengths.end(), [](double length) {
+          return std::isfinite(length) &&
+                 length > std::numeric_limits<double>::epsilon();
+        });
+    if (!all_lengths_valid) {
+      spdlog::warn(
+          "Camera {}: Target {} contains non-finite or non-positive edge "
+          "lengths. Skipping.",
+          label, target_idx);
+      continue;
     }
 
     double sum = 0.0;
@@ -866,6 +882,12 @@ bool SfmCalibrator::ConvertAndScaleReconstruction(
     }
 
     double scale = target_config.fiducial_size / mean;
+    if (!std::isfinite(scale) || scale <= 0.0) {
+      spdlog::warn(
+          "Camera {}: Invalid scale estimated from target {} ({}). Skipping.",
+          label, target_idx, scale);
+      continue;
+    }
     valid_scales.push_back(scale);
   }
 
@@ -902,6 +924,12 @@ bool SfmCalibrator::ConvertAndScaleReconstruction(
   double final_scale = 0.0;
   for (double s : valid_scales) final_scale += s;
   final_scale /= valid_scales.size();
+
+  if (!std::isfinite(final_scale) || final_scale <= 0.0) {
+    spdlog::error("Camera {}: Computed invalid final scale ({}).", label,
+                  final_scale);
+    return false;
+  }
 
   recon_geometry->Scale(final_scale);
 

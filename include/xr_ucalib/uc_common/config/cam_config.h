@@ -61,8 +61,8 @@ struct CamConfig {
   double initial_focal_length = -1.;
 
   // Image width and height in pixels.
-  int width = 0.;
-  int height = 0.;
+  int width = 0;
+  int height = 0;
 
   /// Camera measurement noise (in pixels).
   double noise = 0.5;

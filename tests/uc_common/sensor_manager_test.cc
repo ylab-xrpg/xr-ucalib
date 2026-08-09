@@ -31,18 +31,16 @@ class SensorManagerTest : public ::testing::Test {
   void SetUp() override {
     spdlog::set_level(spdlog::level::warn);
     spdlog::set_pattern("%^[%l]%$ %v");
-    base_dir_ = "../data/test_data_handheld";
+    base_dir_ = XR_UCALIB_TEST_DATA_DIR;
     config_path_ = base_dir_ + "/input_config.json";
     sensor_data_dir_ = base_dir_ + "/sensor_data";
-    workspace_dir_ = base_dir_ + "/ucalib_ws";
-    output_path_ = base_dir_ + "/output_calib_params.json";
+    workspace_dir_ = std::string(XR_UCALIB_TEST_OUTPUT_DIR) + "/ucalib_ws";
   }
 
   std::string base_dir_;
   std::string config_path_;
   std::string sensor_data_dir_;
   std::string workspace_dir_;
-  std::string output_path_;
 };
 
 /// @brief Test loading sensor data and verifying its integrity.

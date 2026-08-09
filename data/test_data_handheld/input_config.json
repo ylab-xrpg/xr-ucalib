@@ -1,7 +1,7 @@
 {
   "cam_calib_config": {
     "cam_down_sample_rate": 10,
-    "ceres_max_num_iterations": 20,
+    "ceres_max_iterations": 20,
     "enable_ba_refine": true,
     "multi_thread_num": 12
   },
@@ -97,18 +97,13 @@
       "fix_spatial_extrinsic": false,
       "fix_temporal_extrinsic": false,
       "noise": 0.1,
-      "rot_q_B_I_prior": {
+      "rot_q_B_Mi_prior": {
         "w": 1.0,
         "x": 0.0,
         "y": 0.0,
         "z": 0.0
       },
-      "toff_B_I_prior": 0.0,
-      "trans_B_I_prior": {
-        "x": 0.0,
-        "y": 0.0,
-        "z": 0.0
-      }
+      "toff_B_Mi_prior": 0.0
     }
   ],
   "target_configs": [
@@ -147,7 +142,7 @@
     }
   ],
   "unified_calib_config": {
-    "ceres_max_num_iterations": 20,
+    "ceres_max_iterations": 20,
     "enable_unified_calib": true,
     "fix_camera_extrinsics": true,
     "fix_camera_intrinsics": true,

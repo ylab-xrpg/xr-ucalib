@@ -114,7 +114,8 @@ int main(int argc, char** argv) {
     std::exit(EXIT_FAILURE);
   }
 
-  spdlog::info("System setup completed in {:.3f} s.", module_timer.ElapsedSeconds());
+  spdlog::info("System setup completed in {:.3f} s.",
+               module_timer.ElapsedSeconds());
 
   // ===========================================================================
 
@@ -123,15 +124,15 @@ int main(int argc, char** argv) {
   spdlog::info("============= Run Camera-only Calibration =============");
   spdlog::info("=======================================================");
 
-  // Step 3.1: Perform SFM-based camera calibration.
+  // Step 3.1: Perform SfM-based camera calibration.
   module_timer.Restart();
   auto sfm_calibrator = xr_ucalib::SfmCalibrator::Create(
       system_config, sensor_manager, calib_parameters);
   if (!sfm_calibrator->RunCalibration()) {
-    spdlog::error("SFM-based camera calibration failed.");
+    spdlog::error("SfM-based camera calibration failed.");
     std::exit(EXIT_FAILURE);
   }
-  spdlog::info("SFM calibration completed in {:.3f} s.",
+  spdlog::info("SfM calibration completed in {:.3f} s.",
                module_timer.ElapsedSeconds());
 
   // Step 3.2: Perform camera rig calibration (bundle adjustment refinement) if
@@ -149,9 +150,13 @@ int main(int argc, char** argv) {
   }
 
   if (!enable_unified_calib) {
-    calib_parameters->ToJson(output_path);
-    spdlog::info("Total calibration pipeline completed in {:.3f} s ({:.2f} min).",
-                 total_timer.ElapsedSeconds(), total_timer.ElapsedMinutes());
+    if (!calib_parameters->ToJson(output_path)) {
+      spdlog::error("Failed to save calibration results to: {}", output_path);
+      std::exit(EXIT_FAILURE);
+    }
+    spdlog::info(
+        "Total calibration pipeline completed in {:.3f} s ({:.2f} min).",
+        total_timer.ElapsedSeconds(), total_timer.ElapsedMinutes());
     return 0;
   }
 
@@ -174,7 +179,10 @@ int main(int argc, char** argv) {
   spdlog::info("Unified calibration completed in {:.3f} s.",
                module_timer.ElapsedSeconds());
 
-  calib_parameters->ToJson(output_path);
+  if (!calib_parameters->ToJson(output_path)) {
+    spdlog::error("Failed to save calibration results to: {}", output_path);
+    std::exit(EXIT_FAILURE);
+  }
 
   // ===========================================================================
 

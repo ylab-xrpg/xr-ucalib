@@ -91,7 +91,7 @@ class ReprojEvaluator {
                            const std::string& work_dir);
 
   /**
-   * @brief Save images with observed and reprojected keypoints overlayed.
+   * @brief Save images with observed and reprojected keypoints overlaid.
    *
    * @param[in] cam_poses_W_Cb Camera poses of the base camera.
    * @param[in] frame_correspondence Frame correspondences among all cameras.

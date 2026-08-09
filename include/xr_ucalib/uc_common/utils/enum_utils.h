@@ -74,4 +74,4 @@ namespace xr_ucalib {
   enum class name { ENUM_VALUES(start_idx, __VA_ARGS__) }; \
   DEFINE_ENUM_TO_FROM_STRING(name, start_idx, __VA_ARGS__)
 
-} // namespace xr_ucalib
+}  // namespace xr_ucalib

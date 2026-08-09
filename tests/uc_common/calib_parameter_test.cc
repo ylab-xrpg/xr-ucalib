@@ -30,11 +30,12 @@ class CalibParameterTest : public ::testing::Test {
   void SetUp() override {
     spdlog::set_level(spdlog::level::warn);
     spdlog::set_pattern("%^[%l]%$ %v");
-    base_dir_ = "../data/test_data_handheld";
+    base_dir_ = XR_UCALIB_TEST_DATA_DIR;
     config_path_ = base_dir_ + "/input_config.json";
     sensor_data_dir_ = base_dir_ + "/sensor_data";
-    workspace_dir_ = base_dir_ + "/ucalib_ws";
-    output_path_ = base_dir_ + "/output_calib_params.json";
+    workspace_dir_ = std::string(XR_UCALIB_TEST_OUTPUT_DIR) + "/ucalib_ws";
+    output_path_ =
+        std::string(XR_UCALIB_TEST_OUTPUT_DIR) + "/calib_params.json";
   }
 
   std::string base_dir_;
@@ -94,7 +95,8 @@ TEST_F(CalibParameterTest, RejectsInvalidFisheyeIntrinsicPrior) {
 
 /// @brief Fisheye620 serialization preserves its model and disabled terms.
 TEST_F(CalibParameterTest, Fisheye620JsonRoundTrip) {
-  constexpr char kOutputPath[] = "/tmp/xr_ucalib_fisheye620_params.json";
+  const std::string output_path =
+      std::string(XR_UCALIB_TEST_OUTPUT_DIR) + "/fisheye620_params.json";
   auto calib_params = xr_ucalib::CalibParameters::Create();
   auto intrinsic = CamRadTanThinPrismFisheyeIntrinsic::Create(
       CamModelType::RAD_TAN_THIN_PRISM_FISHEYE_620);
@@ -102,10 +104,10 @@ TEST_F(CalibParameterTest, Fisheye620JsonRoundTrip) {
   intrinsic->height = 480;
   intrinsic->parameters.assign(16, 1.0);
   calib_params->cam_intrinsics["cam0"] = intrinsic;
-  ASSERT_TRUE(calib_params->ToJson(kOutputPath));
+  ASSERT_TRUE(calib_params->ToJson(output_path));
 
   auto loaded = xr_ucalib::CalibParameters::Create();
-  ASSERT_TRUE(loaded->FromJson(kOutputPath));
+  ASSERT_TRUE(loaded->FromJson(output_path));
   const auto& loaded_intrinsic = loaded->cam_intrinsics.at("cam0");
   EXPECT_EQ(loaded_intrinsic->cam_model_type,
             CamModelType::RAD_TAN_THIN_PRISM_FISHEYE_620);
@@ -114,7 +116,12 @@ TEST_F(CalibParameterTest, Fisheye620JsonRoundTrip) {
        GetFisheye624ConstantParams(loaded_intrinsic->cam_model_type)) {
     EXPECT_DOUBLE_EQ(loaded_intrinsic->parameters.at(index), 0.0);
   }
-  std::remove(kOutputPath);
+}
+
+/// @brief Serialization reports an output path that cannot be opened.
+TEST_F(CalibParameterTest, RejectsUnwritableOutputPath) {
+  auto calib_params = xr_ucalib::CalibParameters::Create();
+  EXPECT_FALSE(calib_params->ToJson(XR_UCALIB_TEST_OUTPUT_DIR));
 }
 
 }  // namespace

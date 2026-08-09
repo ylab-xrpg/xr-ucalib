@@ -282,6 +282,11 @@ bool CalibParameters::ToJson(const std::string& output_path) {
 
     // Serialize.
     output_file << nlm_json.dump(2);
+    output_file.flush();
+    if (!output_file.good()) {
+      spdlog::error("Failed while writing calibration JSON: {}", output_path);
+      return false;
+    }
 
   } catch (const std::exception& e) {
     spdlog::error("JSON writing error: {}", e.what());
