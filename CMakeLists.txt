@@ -86,6 +86,18 @@ else()
   message(STATUS "Sophus version: ${Sophus_VERSION}")
 endif()
 
+# Keep spdlog and Sophus on the same fmt backend.
+add_library(xr_ucalib_spdlog INTERFACE)
+target_link_libraries(xr_ucalib_spdlog INTERFACE spdlog::spdlog_header_only)
+if(TARGET fmt::fmt)
+  target_compile_definitions(xr_ucalib_spdlog INTERFACE SPDLOG_FMT_EXTERNAL)
+  target_link_libraries(xr_ucalib_spdlog INTERFACE fmt::fmt)
+  message(STATUS "spdlog fmt backend: external fmt shared with Sophus")
+else()
+  message(STATUS "spdlog fmt backend: bundled")
+endif()
+add_library(XRUCalib::spdlog ALIAS xr_ucalib_spdlog)
+
 # Ceres (found via COLMAP)
 # NOTE: Ceres is a dependency of COLMAP. Finding it explicitly here causes a conflict
 # because Ceres's FindGlog.cmake attempts to define the 'glog::glog' target twice

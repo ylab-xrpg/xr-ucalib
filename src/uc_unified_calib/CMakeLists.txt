@@ -18,6 +18,6 @@ target_link_libraries(uc_unified_calib
     Ceres::ceres
     nlohmann_json::nlohmann_json
     Sophus::Sophus
-    spdlog::spdlog_header_only
+    XRUCalib::spdlog
     ${OpenCV_LIBS}
 )
