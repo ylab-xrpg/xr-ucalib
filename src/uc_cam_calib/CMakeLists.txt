@@ -20,6 +20,6 @@ target_link_libraries(uc_cam_calib
     colmap::colmap
     OpenMP::OpenMP_CXX
     Sophus::Sophus
-    spdlog::spdlog_header_only
+    XRUCalib::spdlog
     ${OpenCV_LIBS}
 )
